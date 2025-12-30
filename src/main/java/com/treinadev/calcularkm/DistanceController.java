@@ -11,18 +11,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/distance")
-public class DistanceController {    
+public class DistanceController {
+    
+    private final DistanceService distanceService;
+    
+    // Injeção de dependência via construtor
+    public DistanceController(DistanceService distanceService) {
+        this.distanceService = distanceService;
+    }
     
     @PostMapping("")
     public Map<String, Object> calculate(@RequestBody DistanceRequest req) {
-        double distanceKm = DistanceService.calculateKm(
+        double distanceKm = distanceService.calculateKm(
                 req.userLat,
                 req.userLng,
                 req.targetLat,
                 req.targetLng
         );
         Map<String, Object> response = new HashMap<>();
-        response.put("distanceKm", Math.round(distanceKm * 100.0) / 100.0);
+        response.put("distanceKm", distanceKm); // Já está arredondado no service
         return response;
     }    
 
