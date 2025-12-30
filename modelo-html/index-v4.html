@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Versão 4.0 - Treina-DEV | Map</title>
+
+  <!-- Tailwind CSS via CDN (considere usar build próprio em produção) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              black: '#0a0a0a',
+              purple: '#8b5cf6',
+              purpleDark: '#6d28d9',
+              gray: '#1f1f1f'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet CSS e JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #8b5cf6; border-radius: 10px; }
+    
+    /* Efeito de brilho no mapa */
+    #map { filter: grayscale(1) invert(1) contrast(0.9); }
+    .leaflet-container { background: #0a0a0a !important; }
+  </style>
+</head>
+
+<body class="bg-brand-black text-gray-100 min-h-screen font-sans selection:bg-brand-purple">
+
+  <main class="w-full max-w-md mx-auto p-6 flex flex-col gap-6 md:max-w-4xl md:py-12">
+    
+    <!-- Header -->
+    <header class="text-center space-y-2">
+      <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-brand-purple">
+        Treina-DEV House Route Tracker
+      </h1>
+      <h3 class="text-xl">Rastreamento de Rota em Tempo Real</h3>
+      <p class="text-gray-400 text-sm">Destino: CEP 74961-070</p>
+    </header>
+
+    <!-- Botões de Ação -->
+    <div class="flex flex-col gap-3">
+      <button 
+        id="btnCalculate" 
+        class="w-full py-4 bg-brand-purple hover:bg-brand-purpleDark text-white font-bold rounded-2xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Calcular rota até o destino"
+      >
+        📍 Calcular Rota
+      </button>
+      
+      <button 
+        id="btnOpenModal" 
+        class="w-full py-3 border-2 border-brand-purple text-brand-purple hover:bg-brand-purple/10 font-bold rounded-2xl transition-all"
+        aria-label="Abrir modal de cadastro"
+      >
+        🏢 Cadastrar Estabelecimento
+      </button>
+    </div>
+
+    <!-- Modal de Cadastro -->
+    <div 
+      id="modal" 
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="bg-brand-gray border border-white/10 w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+        <h3 id="modalTitle" class="text-xl font-bold text-brand-purple">Novo Cadastro</h3>
+        
+        <form id="formCadastro" class="space-y-3">
+          <input 
+            type="text" 
+            id="regName" 
+            placeholder="Nome Completo" 
+            required
+            class="w-full bg-black/50 border border-white/10 rounded-xl p-3 outline-none focus:border-brand-purple transition-all"
+            aria-label="Nome completo"
+          >
+          <input 
+            type="text" 
+            id="regEst" 
+            placeholder="Nome do Estabelecimento" 
+            required
+            class="w-full bg-black/50 border border-white/10 rounded-xl p-3 outline-none focus:border-brand-purple transition-all"
+            aria-label="Nome do estabelecimento"
+          >
+          <input 
+            type="tel" 
+            id="regTel" 
+            placeholder="Telefone (00) 00000-0000" 
+            maxlength="15" 
+            required
+            class="w-full bg-black/50 border border-white/10 rounded-xl p-3 outline-none focus:border-brand-purple transition-all"
+            aria-label="Telefone de contato"
+          >
+          
+          <div class="flex gap-2 text-xs text-gray-400 bg-black/30 p-2 rounded-lg">
+            <span>📍 Coordenadas:</span>
+            <span id="coordsDisplay" aria-live="polite">Aguardando GPS...</span>
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <button 
+              type="button"
+              id="btnCloseModal" 
+              class="flex-1 py-2 text-gray-400 font-medium hover:text-white transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit"
+              id="btnSaveData" 
+              class="flex-1 py-2 bg-brand-purple hover:bg-brand-purpleDark rounded-xl font-bold transition-colors"
+            >
+              Salvar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Visualização de Dados Cadastrados -->
+    <div id="tempView" class="hidden space-y-3">
+      <h4 class="text-xs uppercase tracking-widest text-gray-500 font-bold">Cadastrado Temporário</h4>
+      <div class="bg-gradient-to-br from-brand-purple/20 to-transparent border border-brand-purple/30 p-4 rounded-2xl">
+        <p id="viewText" class="text-sm leading-relaxed"></p>
+      </div>
+    </div>
+
+    <!-- Seção do Mapa -->
+    <section class="bg-brand-gray/50 backdrop-blur-md border border-white/10 p-6 rounded-3xl shadow-2xl space-y-6">
+      
+      <p 
+        id="info" 
+        class="text-center text-xs font-medium text-brand-purple min-h-[20px]"
+        aria-live="polite"
+      ></p>
+
+      <div class="relative group">
+        <div class="absolute -inset-1 bg-gradient-to-r from-brand-purple to-purple-900 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+        <div 
+          id="map" 
+          class="relative w-full h-[300px] md:h-[450px] rounded-2xl border border-white/5 overflow-hidden"
+          role="application"
+          aria-label="Mapa interativo mostrando a rota"
+        ></div>
+      </div>
+
+    </section>
+
+    <!-- Resultados da Rota -->
+    <section 
+      id="results" 
+      class="grid grid-cols-1 md:grid-cols-3 gap-4 opacity-0 transition-opacity duration-500"
+      aria-live="polite"
+    >
+      <div class="bg-brand-gray/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center">
+        <span class="text-2xl mb-1" aria-hidden="true">📏</span>
+        <span class="text-gray-400 text-xs uppercase tracking-widest">Distância</span>
+        <p id="distance" class="text-lg font-bold text-white">-- km</p>
+      </div>
+      
+      <div class="bg-brand-gray/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center">
+        <span class="text-2xl mb-1" aria-hidden="true">🚗</span>
+        <span class="text-gray-400 text-xs uppercase tracking-widest">Tempo Carro</span>
+        <p id="carTime" class="text-lg font-bold text-white">-- min</p>
+      </div>
+
+      <div class="bg-brand-gray/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center">
+        <span class="text-2xl mb-1" aria-hidden="true">🏍️</span>
+        <span class="text-gray-400 text-xs uppercase tracking-widest">Tempo Moto</span>
+        <p id="bikeTime" class="text-lg font-bold text-white">-- min</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ============================================
+    // CONSTANTES E CONFIGURAÇÕES
+    // ============================================
+    /**House
+     * -16.782238
+     * 49.329467
+     * 
+     * Outro: 
+     * TARGET_LAT: -16.8236,
+     * TARGET_LNG: -49.3248,
+    */
+    const CONFIG = {
+      TARGET_LAT: -16.782238,
+      TARGET_LNG: 49.329467,
+      CAR_TO_BIKE_RATIO: 0.85, // Moto é ~15% mais rápida
+      ROUTE_COLOR: '#8b5cf6',
+      ROUTE_WEIGHT: 5,
+      ROUTE_OPACITY: 0.8,
+      MAP_ZOOM: 13,
+      MAP_PADDING: [30, 30]
+    };
+
+    // ============================================
+    // ELEMENTOS DO DOM (cache para performance)
+    // ============================================
+    const DOM = {
+      // Botões
+      btnCalculate: document.getElementById("btnCalculate"),
+      btnOpenModal: document.getElementById("btnOpenModal"),
+      btnCloseModal: document.getElementById("btnCloseModal"),
+      btnSaveData: document.getElementById("btnSaveData"),
+      
+      // Modal e Form
+      modal: document.getElementById("modal"),
+      formCadastro: document.getElementById("formCadastro"),
+      regName: document.getElementById("regName"),
+      regEst: document.getElementById("regEst"),
+      regTel: document.getElementById("regTel"),
+      coordsDisplay: document.getElementById("coordsDisplay"),
+      
+      // Visualização
+      tempView: document.getElementById("tempView"),
+      viewText: document.getElementById("viewText"),
+      
+      // Mapa e Resultados
+      map: document.getElementById("map"),
+      info: document.getElementById("info"),
+      results: document.getElementById("results"),
+      distance: document.getElementById("distance"),
+      carTime: document.getElementById("carTime"),
+      bikeTime: document.getElementById("bikeTime")
+    };
+
+    // ============================================
+    // ESTADO DA APLICAÇÃO
+    // ============================================
+    let appState = {
+      map: null,
+      routeLayer: null,
+      currentCoords: { lat: null, lng: null },
+      isCalculating: false
+    };
+
+    // ============================================
+    // UTILITÁRIOS
+    // ============================================
+    
+    /**
+     * Aplica máscara de telefone brasileiro
+     * @param {string} value - Valor do input
+     * @returns {string} Valor formatado
+     */
+    function applyPhoneMask(value) {
+      const cleaned = value.replace(/\D/g, '');
+      const match = cleaned.match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+      if (!match) return value;
+      
+      if (!match[2]) return match[1];
+      return `(${match[1]}) ${match[2]}${match[3] ? '-' + match[3] : ''}`;
+    }
+
+    /**
+     * Valida se todos os campos do formulário estão preenchidos
+     * @returns {boolean}
+     */
+    function validateForm() {
+      const nome = DOM.regName.value.trim();
+      const est = DOM.regEst.value.trim();
+      const tel = DOM.regTel.value.trim();
+      
+      if (!nome || !est || tel.length < 14) {
+        showMessage("Preencha todos os campos corretamente!", true);
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Exibe mensagem de feedback
+     * @param {string} message - Mensagem a ser exibida
+     * @param {boolean} isError - Se é uma mensagem de erro
+     * @param {number} duration - Duração em ms (0 = permanente)
+     */
+    function showMessage(message, isError = false, duration = 3000) {
+      DOM.info.textContent = message;
+      DOM.info.classList.toggle('text-red-500', isError);
+      DOM.info.classList.toggle('text-brand-purple', !isError);
+      DOM.info.classList.toggle('animate-pulse', !isError);
+      
+      if (duration > 0) {
+        setTimeout(() => {
+          DOM.info.textContent = "";
+          DOM.info.classList.remove('text-red-500', 'text-brand-purple', 'animate-pulse');
+        }, duration);
+      }
+    }
+
+    /**
+     * Obtém coordenadas do usuário via GPS
+     * @returns {Promise<{lat: number, lng: number}>}
+     */
+    function getUserLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Geolocalização não suportada"));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          },
+          (error) => {
+            reject(error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
+
+    /**
+     * Inicializa o mapa Leaflet
+     * @param {number} lat - Latitude inicial
+     * @param {number} lng - Longitude inicial
+     */
+    function initMap(lat, lng) {
+      if (appState.map) return; // Evita reinicialização
+
+      appState.map = L.map("map", { zoomControl: false })
+        .setView([lat, lng], CONFIG.MAP_ZOOM);
+      
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(appState.map);
+    }
+
+    /**
+     * Calcula e exibe a rota no mapa
+     * @param {number} userLat - Latitude do usuário
+     * @param {number} userLng - Longitude do usuário
+     */
+    async function calculateRoute(userLat, userLng) {
+      const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${CONFIG.TARGET_LNG},${CONFIG.TARGET_LAT}?overview=full&geometries=geojson`;
+
+      try {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.routes || data.routes.length === 0) {
+          throw new Error("Nenhuma rota encontrada");
+        }
+
+        const route = data.routes[0];
+        
+        // Remove rota anterior se existir
+        if (appState.routeLayer) {
+          appState.map.removeLayer(appState.routeLayer);
+        }
+
+        // Desenha a nova rota
+        appState.routeLayer = L.geoJSON(route.geometry, {
+          style: {
+            color: CONFIG.ROUTE_COLOR,
+            weight: CONFIG.ROUTE_WEIGHT,
+            opacity: CONFIG.ROUTE_OPACITY
+          }
+        }).addTo(appState.map);
+
+        // Adiciona marcadores
+        const userIcon = L.divIcon({ 
+          html: '🔵', 
+          className: 'text-2xl', 
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        const destIcon = L.divIcon({ 
+          html: '🏁', 
+          className: 'text-2xl', 
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        L.marker([userLat, userLng], { icon: userIcon }).addTo(appState.map);
+        L.marker([CONFIG.TARGET_LAT, CONFIG.TARGET_LNG], { icon: destIcon }).addTo(appState.map);
+
+        // Ajusta o zoom para mostrar toda a rota
+        appState.map.fitBounds(
+          appState.routeLayer.getBounds(), 
+          { padding: CONFIG.MAP_PADDING }
+        );
+
+        // Calcula e exibe os resultados
+        const distanceKm = (route.distance / 1000).toFixed(1);
+        const carMinutes = Math.round(route.duration / 60);
+        const bikeMinutes = Math.round(carMinutes * CONFIG.CAR_TO_BIKE_RATIO);
+
+        DOM.results.classList.remove('opacity-0');
+        DOM.distance.textContent = `${distanceKm} km`;
+        DOM.carTime.textContent = `${carMinutes} min`;
+        DOM.bikeTime.textContent = `${bikeMinutes} min`;
+
+        showMessage("✅ Rota calculada com sucesso!");
+        
+      } catch (error) {
+        console.error("Erro ao calcular rota:", error);
+        showMessage("❌ Erro ao calcular rota. Tente novamente.", true);
+      }
+    }
+
+    // ============================================
+    // EVENT LISTENERS - MODAL DE CADASTRO
+    // ============================================
+    
+    // Máscara de telefone
+    DOM.regTel.addEventListener("input", (e) => {
+      e.target.value = applyPhoneMask(e.target.value);
+    });
+
+    // Abrir modal e obter coordenadas
+    DOM.btnOpenModal.addEventListener("click", async () => {
+      DOM.modal.classList.remove("hidden");
+      DOM.modal.classList.add("flex");
+      
+      try {
+        const coords = await getUserLocation();
+        appState.currentCoords.lat = coords.lat.toFixed(6);
+        appState.currentCoords.lng = coords.lng.toFixed(6);
+        DOM.coordsDisplay.textContent = `${appState.currentCoords.lat}, ${appState.currentCoords.lng}`;
+      } catch (error) {
+        console.error("Erro ao obter GPS:", error);
+        DOM.coordsDisplay.textContent = "GPS indisponível";
+      }
+    });
+
+    // Fechar modal
+    DOM.btnCloseModal.addEventListener("click", () => {
+      DOM.modal.classList.add("hidden");
+      DOM.modal.classList.remove("flex");
+      DOM.formCadastro.reset();
+    });
+
+    // Salvar cadastro
+    DOM.formCadastro.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      if (!validateForm()) return;
+
+      const cadastro = {
+        nome: DOM.regName.value.trim(),
+        estabelecimento: DOM.regEst.value.trim(),
+        telefone: DOM.regTel.value.trim(),
+        latitude: appState.currentCoords.lat,
+        longitude: appState.currentCoords.lng
+      };
+
+      // Exibe dados cadastrados
+      DOM.tempView.classList.remove("hidden");
+      DOM.viewText.innerHTML = `
+        <strong>Estabelecimento:</strong> ${cadastro.estabelecimento}<br>
+        <strong>Responsável:</strong> ${cadastro.nome}<br>
+        <strong>Contato:</strong> ${cadastro.telefone}<br>
+        <strong>Local:</strong> ${cadastro.latitude}, ${cadastro.longitude}
+      `;
+
+      // Fecha modal e limpa form
+      DOM.modal.classList.add("hidden");
+      DOM.modal.classList.remove("flex");
+      DOM.formCadastro.reset();
+
+      // TODO: Enviar dados para backend
+      console.log("✅ Dados prontos para envio:", cadastro);
+      
+      // Aqui você pode fazer o fetch para sua API
+      // await fetch('https://api-java-localizacao.onrender.com/estabelecimentos', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(cadastro)
+      // });
+    });
+
+    // ============================================
+    // EVENT LISTENER - CÁLCULO DE ROTA
+    // ============================================
+    
+    DOM.btnCalculate.addEventListener("click", async () => {
+      if (appState.isCalculating) return; // Previne múltiplos cliques
+      
+      appState.isCalculating = true;
+      DOM.btnCalculate.disabled = true;
+      showMessage("📍 Acessando GPS...", false, 0);
+
+      try {
+        const userLocation = await getUserLocation();
+        showMessage("🗺️ Traçando melhor caminho...", false, 0);
+
+        // Inicializa o mapa se necessário
+        initMap(userLocation.lat, userLocation.lng);
+
+        // Calcula a rota
+        await calculateRoute(userLocation.lat, userLocation.lng);
+
+      } catch (error) {
+        console.error("Erro:", error);
+        
+        if (error.code === 1) { // PERMISSION_DENIED
+          showMessage("📍 Ative o GPS para continuar.", true);
+        } else if (error.code === 2) { // POSITION_UNAVAILABLE
+          showMessage("❌ GPS indisponível no momento.", true);
+        } else if (error.code === 3) { // TIMEOUT
+          showMessage("⏱️ Tempo esgotado ao buscar localização.", true);
+        } else {
+          showMessage("❌ Erro ao calcular rota.", true);
+        }
+      } finally {
+        appState.isCalculating = false;
+        DOM.btnCalculate.disabled = false;
+      }
+    });
+
+    // ============================================
+    // INICIALIZAÇÃO
+    // ============================================
+    console.log("✅ Aplicação carregada com sucesso!");
+  </script>
+
+</body>
+</html>
