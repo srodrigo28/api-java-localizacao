@@ -7,6 +7,3 @@ COPY .mvn .mvn
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
 RUN ./mvnw dependency:go-offline
-
-# Copia o código-fonte e compila a aplicação
-// ...existing code...
