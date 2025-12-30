@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calcular Distância</title>
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+  <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-sm space-y-4">
+    <h1 class="text-xl font-bold text-center">
+      Calcular distância até o CEP base
+    </h1>
+
+    <p class="text-sm text-gray-600 text-center">
+      CEP base: <strong>74961-070</strong>
+    </p>
+
+    <button
+      id="btn"
+      class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+    >
+      Calcular distância
+    </button>
+
+    <p id="status" class="text-center text-sm text-gray-500"></p>
+
+    <p id="result" class="text-center text-lg font-semibold"></p>
+  </div>
+
+  <script>
+    const API_URL = "https://api-java-localizacao.onrender.com/distance"
+
+    // Coordenadas do CEP base
+    const targetLat = -16.8236
+    const targetLng = -49.2469
+
+    const btn = document.getElementById("btn")
+    const status = document.getElementById("status")
+    const result = document.getElementById("result")
+
+    btn.addEventListener("click", () => {
+      status.textContent = "Obtendo localização..."
+      result.textContent = ""
+
+      if (!navigator.geolocation) {
+        status.textContent = "Geolocalização não suportada."
+        return
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const userLat = position.coords.latitude
+          const userLng = position.coords.longitude
+
+          status.textContent = "Calculando distância..."
+
+          try {
+            const response = await fetch(API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                userLat,
+                userLng,
+                targetLat,
+                targetLng
+              })
+            })
+
+            const data = await response.json()
+
+            result.textContent = `Distância: ${data.distanceKm} km`
+            status.textContent = ""
+          } catch (error) {
+            status.textContent = "Erro ao calcular distância."
+          }
+        },
+        () => {
+          status.textContent = "Permissão de localização negada."
+        }
+      )
+    })
+  </script>
+
+</body>
+</html>
