@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manual do Projeto | calcularkm</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Configuração opcional do Tailwind (cores e fonte) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50:  '#f2fbff',
+              100: '#e6f6ff',
+              200: '#ccecff',
+              300: '#a3deff',
+              400: '#6fc8ff',
+              500: '#3fb1ff',
+              600: '#1f89d6',
+              700: '#186ba8',
+              800: '#134f7b',
+              900: '#0d3552',
+            }
+          }
+        }
+      },
+      darkMode: 'class'
+    };
+  </script>
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Destaque de código simples */
+    pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace }
+    .code-block { background: rgba(2, 6, 23, 0.04) }
+    .dark .code-block { background: rgba(255,255,255,0.06) }
+  </style>
+</head>
+<body class="font-sans bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">
+  <!-- Barra superior -->
+  <header class="sticky top-0 z-50 backdrop-blur bg-white/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2 font-semibold">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brand-500 text-white">km</span>
+        <span>calcularkm</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#visao-geral" class="hover:text-brand-600">Visão geral</a>
+        <a href="#requisitos" class="hover:text-brand-600">Requisitos</a>
+        <a href="#execucao" class="hover:text-brand-600">Execução</a>
+        <a href="#endpoints" class="hover:text-brand-600">Endpoints</a>
+        <a href="#como-funciona" class="hover:text-brand-600">Funcionamento</a>
+        <a href="#testes" class="hover:text-brand-600">Testes</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button id="themeToggle" class="rounded-md px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+          Alternar tema
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">API de cálculo de distância com localização</h1>
+        <p class="mt-4 text-slate-600 dark:text-slate-300">
+          Calcule distância entre coordenadas usando Haversine, com validação de entrada e formatação localizada via Accept-Language.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="#endpoints" class="inline-flex items-center gap-2 rounded-md bg-brand-600 px-4 py-2 text-white hover:bg-brand-700">Ver endpoints</a>
+          <a href="#execucao" class="inline-flex items-center gap-2 rounded-md border border-slate-300 dark:border-slate-700 px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">Como executar</a>
+        </div>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 code-block">
+        <pre class="text-sm overflow-auto"><code>// Stack
+Spring Boot 4.0.1 · Java 21
+Validação Jakarta · Lombok (opcional)
+
+// Endpoints
+POST /distance  → calcula distância
+GET  /distance/ping  → health-check
+
+// Localização
+Accept-Language: pt-BR, pt-PT, en-US (fallback automático)</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conteúdo -->
+  <main class="max-w-6xl mx-auto px-4 py-12 space-y-16">
+    <!-- Visão geral -->
+    <section id="visao-geral" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Visão geral</h2>
+      <p>
+        Esta API calcula a distância em quilômetros entre dois pontos geográficos utilizando a fórmula de Haversine.
+        O resultado é retornado com valor numérico e uma versão formatada segundo o Locale do cliente.
+      </p>
+    </section>
+
+    <!-- Requisitos -->
+    <section id="requisitos" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Requisitos</h2>
+      <ul class="list-disc pl-6 space-y-2">
+        <li>JDK 21 instalado (JAVA_HOME e PATH configurados).</li>
+        <li>Maven 3.9+.</li>
+        <li>Visual Studio Code com “Extension Pack for Java”.</li>
+      </ul>
+    </section>
+
+    <!-- Execução -->
+    <section id="execucao" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Como construir e executar</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4 code-block">
+          <h3 class="font-semibold mb-2">Maven (desenvolvimento)</h3>
+          <pre class="text-sm overflow-auto"><code>mvn clean package
+mvn spring-boot:run</code></pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4 code-block">
+          <h3 class="font-semibold mb-2">Executar JAR</h3>
+          <pre class="text-sm overflow-auto"><code>java -jar target\calcularkm-0.0.1-SNAPSHOT.jar</code></pre>
+        </div>
+      </div>
+      <p class="text-slate-600 dark:text-slate-300">Aplicação padrão na porta 8080: http://localhost:8080</p>
+    </section>
+
+    <!-- Endpoints -->
+    <section id="endpoints" class="space-y-6">
+      <h2 class="text-2xl font-semibold">Endpoints</h2>
+
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- POST /distance -->
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <h3 class="text-lg font-semibold">POST /distance</h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Calcula distância em quilômetros entre duas coordenadas.</p>
+
+          <div class="mt-4">
+            <h4 class="font-semibold">Headers</h4>
+            <ul class="list-disc pl-6 text-sm space-y-1">
+              <li>Content-Type: application/json</li>
+              <li>Accept-Language: pt-BR | pt-PT | en-US (fallback automático)</li>
+            </ul>
+          </div>
+
+          <div class="mt-4">
+            <h4 class="font-semibold">Body (DistanceRequest)</h4>
+            <pre class="text-sm overflow-auto code-block p-3 rounded"><code>{
+  "userLat": -23.550520,
+  "userLng": -46.633308,
+  "targetLat": -22.906847,
+  "targetLng": -43.172896
+}</code></pre>
+          </div>
+
+          <div class="mt-4">
+            <h4 class="font-semibold">Resposta (DistanceResponse)</h4>
+            <pre class="text-sm overflow-auto code-block p-3 rounded"><code>{
+  "distanceKm": 357.12,
+  "distanceKmFormatted": "357,12"
+}</code></pre>
+          </div>
+
+          <div class="mt-4">
+            <h4 class="font-semibold">Exemplo (PowerShell curl)</h4>
+            <div class="relative">
+              <pre id="curlDistance" class="text-sm overflow-auto code-block p-3 rounded"><code>curl -X POST ^
+  -H "Content-Type: application/json" ^
+  -H "Accept-Language: pt-BR" ^
+  -d "{\"userLat\":-23.55052,\"userLng\":-46.633308,\"targetLat\":-22.906847,\"targetLng\":-43.172896}" ^
+  http://localhost:8080/distance</code></pre>
+              <button class="absolute top-2 right-2 px-3 py-1 text-xs rounded bg-slate-800 text-white hover:bg-slate-700" onclick="copyCurl('curlDistance')">Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GET /distance/ping -->
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <h3 class="text-lg font-semibold">GET /distance/ping</h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Health-check simples. Retorna texto “ok”.</p>
+          <div class="mt-4">
+            <h4 class="font-semibold">Exemplo</h4>
+            <div class="relative">
+              <pre id="curlPing" class="text-sm overflow-auto code-block p-3 rounded"><code>curl http://localhost:8080/distance/ping</code></pre>
+              <button class="absolute top-2 right-2 px-3 py-1 text-xs rounded bg-slate-800 text-white hover:bg-slate-700" onclick="copyCurl('curlPing')">Copiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playground -->
+      <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+        <h3 class="text-lg font-semibold">Teste rápido no navegador</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Faça uma chamada ao endpoint local e visualize a resposta. Certifique-se de que a API está rodando em http://localhost:8080.
+        </p>
+
+        <form id="playgroundForm" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm mb-1">User Latitude</label>
+            <input type="number" step="0.000001" id="userLat" class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2" value="-23.550520">
+          </div>
+          <div>
+            <label class="block text-sm mb-1">User Longitude</label>
+            <input type="number" step="0.000001" id="userLng" class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2" value="-46.633308">
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Target Latitude</label>
+            <input type="number" step="0.000001" id="targetLat" class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2" value="-22.906847">
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Target Longitude</label>
+            <input type="number" step="0.000001" id="targetLng" class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2" value="-43.172896">
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Accept-Language</label>
+            <select id="acceptLanguage" class="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2">
+              <option value="pt-BR">pt-BR (Português Brasil)</option>
+              <option value="pt-PT">pt-PT (Português Portugal)</option>
+              <option value="en-US">en-US (English US)</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="w-full rounded-md bg-brand-600 text-white px-4 py-2 hover:bg-brand-700">Calcular</button>
+          </div>
+        </form>
+
+        <div id="playgroundResult" class="mt-6 grid md:grid-cols-2 gap-6">
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+            <h4 class="font-semibold mb-2">Resultado</h4>
+            <div class="text-sm">Distance (km): <span id="resDistanceKm" class="font-semibold">—</span></div>
+            <div class="text-sm">Formatado: <span id="resDistanceKmFmt" class="font-semibold">—</span></div>
+            <div class="text-xs mt-2 text-slate-600 dark:text-slate-400">Status: <span id="resStatus">—</span></div>
+          </div>
+          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+            <h4 class="font-semibold mb-2">JSON bruto</h4>
+            <pre id="resRaw" class="text-sm overflow-auto code-block p-3 rounded"><code>// A resposta aparecerá aqui…</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Funcionamento interno -->
+    <section id="como-funciona" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Funcionamento interno</h2>
+      <ul class="list-disc pl-6 space-y-2">
+        <li>DistanceService: fórmula de Haversine com raio WGS84 (6371.0088 km) e arredondamento com BigDecimal (HALF_UP) para 2 casas decimais.</li>
+        <li>Validação: @Valid no controller e anotações em DistanceRequest garantem lat/long válidas.</li>
+        <li>Localização: Accept-Language determina formatação numérica (fallback para Locale default).</li>
+        <li>Logging: SLF4J/Logback. Ajuste nível em application.properties.</li>
+      </ul>
+      <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4 code-block">
+        <pre class="text-sm overflow-auto"><code>logging.level.com.treinadev.calcularkm=DEBUG</code></pre>
+      </div>
+    </section>
+
+    <!-- Testes -->
+    <section id="testes" class="space-y-4">
+      <h2 class="text-2xl font-semibold">Testes</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4 code-block">
+          <h3 class="font-semibold mb-2">Executar testes</h3>
+          <pre class="text-sm overflow-auto"><code>mvn test</code></pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+          <h3 class="font-semibold mb-2">Cobertura sugerida</h3>
+          <ul class="list-disc pl-6 text-sm space-y-1">
+            <li>Unit tests do DistanceService: coordenadas iguais, extremos, inválidos.</li>
+            <li>Integração: POST /distance com Accept-Language variado.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="mt-12 border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-8 text-sm text-slate-600 dark:text-slate-400">
+      <div>calcularkm · Spring Boot 4.0.1 · Java 21</div>
+      <div class="mt-2">Projeto em: c:\dev\java\java-localizacao</div>
+    </div>
+  </footer>
+
+  <!-- Script -->
+  <script>
+    // Alternar tema claro/escuro (persistência em localStorage)
+    const themeToggle = document.getElementById('themeToggle');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme');
+    function applyTheme(mode) {
+      if (mode === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', mode);
+    }
+    applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+    themeToggle.addEventListener('click', () => {
+      const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+      applyTheme(next);
+    });
+
+    // Copiar comandos curl
+    function copyCurl(id) {
+      const el = document.getElementById(id);
+      const text = el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = el.parentElement.querySelector('button');
+        const prev = btn.textContent;
+        btn.textContent = 'Copiado!';
+        setTimeout(() => (btn.textContent = prev), 1200);
+      });
+    }
+
+    // Playground: chamar POST /distance
+    document.getElementById('playgroundForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const req = {
+        userLat: parseFloat(document.getElementById('userLat').value),
+        userLng: parseFloat(document.getElementById('userLng').value),
+        targetLat: parseFloat(document.getElementById('targetLat').value),
+        targetLng: parseFloat(document.getElementById('targetLng').value),
+      };
+      const lang = document.getElementById('acceptLanguage').value;
+
+      const resStatus = document.getElementById('resStatus');
+      const resDistanceKm = document.getElementById('resDistanceKm');
+      const resDistanceKmFmt = document.getElementById('resDistanceKmFmt');
+      const resRaw = document.getElementById('resRaw');
+
+      resStatus.textContent = 'enviando…';
+      resDistanceKm.textContent = '—';
+      resDistanceKmFmt.textContent = '—';
+      resRaw.textContent = '// A resposta aparecerá aqui…';
+
+      try {
+        const resp = await fetch('http://localhost:8080/distance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept-Language': lang
+          },
+          body: JSON.stringify(req)
+        });
+
+        resStatus.textContent = `${resp.status} ${resp.statusText}`;
+
+        const data = await resp.json().catch(() => ({}));
+
+        // Exibe resultados esperados
+        resDistanceKm.textContent = data.distanceKm ?? '—';
+        resDistanceKmFmt.textContent = data.distanceKmFormatted ?? '—';
+        resRaw.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        resStatus.textContent = 'erro de rede';
+        resRaw.textContent = String(err);
+      }
+    });
+  </script>
+</body>
+</html>
